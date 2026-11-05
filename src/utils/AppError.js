@@ -32,8 +32,10 @@ class AppError extends Error {
   static conflict(message = 'Conflict', code = 'CONFLICT', details) {
     return new AppError(409, code, message, details);
   }
-  static tooManyRequests(message = 'Too many requests', code = 'RATE_LIMITED') {
-    return new AppError(429, code, message);
+  static tooManyRequests(message = 'Too many requests', code = 'RATE_LIMITED', retryAfterSeconds = null) {
+    const err = new AppError(429, code, message, retryAfterSeconds ? { retryAfterSeconds } : null);
+    err.retryAfterSeconds = retryAfterSeconds;
+    return err;
   }
 }
 

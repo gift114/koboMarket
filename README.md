@@ -4,12 +4,12 @@ A multi-vendor marketplace backend with wallets and escrow. Buyers pay into escr
 
 **Stack:** Node.js, Express, MongoDB (user side), PostgreSQL (money side).
 
-> Status: Day 2 of 14 complete (foundation + PostgreSQL ledger schema). This README grows with each module.
+> Status: Day 3 of 14 complete (foundation, PostgreSQL ledger schema, authentication). This README grows with each module.
 
 ## Quick start
 
 ```bash
-cp .env.example .env        # then set real JWT secrets (32+ chars each)
+cp .env.example .env        # then set JWT_ACCESS_SECRET to a random 32+ character value
 docker-compose up --build   # starts API + MongoDB + PostgreSQL, runs migrations
 npm run seed                # (seed data arrives on Day 13)
 ```
@@ -39,7 +39,8 @@ npm run dev
 | `npm run migrate:rollback` | Roll back the last migration batch |
 | `npm run seed` | Seed admin, vendors, products, buyers (Day 13) |
 | `npm run audit:ledger` | Verify the money invariant, prints PASS/FAIL (Day 5) |
-| `npm test` | Jest + Supertest. Needs PostgreSQL running (`docker-compose up -d postgres`); it creates and rebuilds its own `kobomarket_test` database each run |
+| `npm test` | Jest + Supertest against real MongoDB and PostgreSQL (`docker-compose up -d mongo postgres`). It rebuilds its own `kobomarket_test` databases each run |
+| `npm run test:memory` | Same suite, but the MongoDB repositories are replaced by in-memory fakes. For machines with no MongoDB; PostgreSQL is still required |
 
 ## Project structure
 
@@ -123,6 +124,28 @@ erDiagram
 Mistakes are fixed by a new `REVERSAL` transaction, never by editing a row. The `account_reconciliation` view compares each cached balance with its ledger sum and must never show a mismatch.
 
 Note: a database superuser can disable triggers. The application connects as an ordinary role in production deployments; the demo `docker-compose` uses the superuser for simplicity (listed under known limitations).
+
+## Authentication (Module A)
+
+Users live in MongoDB. Endpoints: `register`, `verify-email`, `resend-verification`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`, plus `GET/PATCH /users/me`. Full details at `/api-docs`.
+
+| Concern | Design |
+|---|---|
+| Passwords | bcrypt (cost from `BCRYPT_ROUNDS`, default 12). 8-72 bytes, at least one letter and one number. The hash is `select:false` and never returned. |
+| Email verification | Random 256-bit token, stored as a SHA-256 hash, valid for `EMAIL_VERIFICATION_TTL_HOURS`, single use. Login returns `403 EMAIL_NOT_VERIFIED` until verified. |
+| Access token | JWT, 15 minutes, carries only `sub` and `tv` (token version). Roles and frozen status are read from the database on every request, so they are never stale. |
+| Refresh token | Opaque random string, 7 days, stored only as a SHA-256 hash. **Rotated on every use**: the old one is consumed by one atomic `findOneAndUpdate`, so it works exactly once, even under concurrent requests. |
+| Reuse detection | Presenting an already-used refresh token bumps the user's `tokenVersion` (every access token dies at once) and revokes every refresh token: all sessions are logged out. |
+| Logout | Revokes that session's refresh-token family (the token and everything rotated from it). Other devices stay signed in. |
+| Password reset | One-time token, `PASSWORD_RESET_TTL_MINUTES`. Resetting also bumps `tokenVersion` and revokes all refresh tokens. Forgot-password and resend-verification give the same reply whether or not the account exists. |
+| Login throttling | 5 failed attempts per 15 minutes per **email + IP** (hashed key), then `429` with `Retry-After`, even for the correct password. Counted with atomic MongoDB updates; success resets it. |
+| Mass assignment | Request schemas are `.strict()`: sending `roles`, `status` or `email` to a profile or register endpoint is rejected with 422. |
+
+**Email.** `MAIL_TRANSPORT=console` (default) prints emails, including the verification and reset tokens, to the API's stdout; the brief allows this. It writes straight to stdout, not through the structured logger, so tokens never appear in log lines. Set `MAIL_TRANSPORT=smtp` with `SMTP_*` (for example Mailtrap) for real delivery. With Docker: `docker-compose logs -f api`.
+
+**A race worth knowing about.** If two requests replay the same refresh token at the same instant, the replay's "log out everywhere" sweep could run *before* the winner has stored its new token, leaving one live session. `bumpTokenVersion` therefore runs before the revoke sweep, and `refresh()` re-checks the token version after storing its new token and undoes itself if it changed. A deterministic test holds the winner's write open, fires the replay in that window, and asserts no live token remains. Removing the guard makes that test fail.
+
+Not yet built: role checks (RBAC middleware) arrive with the vendor module; the PostgreSQL wallet that must be created for every new user is part of the cross-database consistency work (Day 4).
 
 ## Sections still to be written (as modules land)
 

@@ -34,6 +34,8 @@ function errorHandler(err, req, res, next) {
     (req.log || logger).error({ err, requestId: req.id }, 'Server error');
   }
 
+  if (error.retryAfterSeconds) res.set('Retry-After', String(error.retryAfterSeconds));
+
   res.status(error.statusCode).json({
     success: false,
     error: {

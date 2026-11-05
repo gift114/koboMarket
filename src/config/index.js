@@ -13,7 +13,6 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
 
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
-  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
   ACCESS_TOKEN_TTL_MINUTES: int(15),
   REFRESH_TOKEN_TTL_DAYS: int(7),
   EMAIL_VERIFICATION_TTL_HOURS: int(24),
@@ -29,6 +28,19 @@ const schema = z.object({
   COMMISSION_RATE_BPS: z.coerce.number().int().min(0).max(10000).default(500),
   ESCROW_AUTO_COMPLETE_HOURS: int(72),
   PAYOUT_MINIMUM_KOBO: int(100000),
+
+  BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+  AUTH_RATE_LIMIT_MAX_REQUESTS: int(20),
+  APP_BASE_URL: z.string().default('http://localhost:3000'),
+
+  // "console" prints emails to stdout (default, as allowed by the brief), "smtp" sends via
+  // SMTP (e.g. Mailtrap), "memory" keeps them in an array for tests.
+  MAIL_TRANSPORT: z.enum(['console', 'smtp', 'memory']).default('console'),
+  MAIL_FROM: z.string().default('KoboMarket <no-reply@kobomarket.local>'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: int(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 
   PAYMENT_PROVIDER: z.enum(['mock', 'paystack']).default('mock'),
   PAYSTACK_SECRET_KEY: z.string().optional(),
@@ -53,6 +65,12 @@ if (env.PAYMENT_PROVIDER === 'paystack' && !env.PAYSTACK_SECRET_KEY) {
   process.exit(1);
 }
 
+if (env.MAIL_TRANSPORT === 'smtp' && !env.SMTP_HOST) {
+  // eslint-disable-next-line no-console
+  console.error('SMTP_HOST is required when MAIL_TRANSPORT=smtp');
+  process.exit(1);
+}
+
 module.exports = {
   env: env.NODE_ENV,
   isProd: env.NODE_ENV === 'production',
@@ -66,13 +84,22 @@ module.exports = {
 
   auth: {
     accessSecret: env.JWT_ACCESS_SECRET,
-    refreshSecret: env.JWT_REFRESH_SECRET,
     accessTtlMinutes: env.ACCESS_TOKEN_TTL_MINUTES,
     refreshTtlDays: env.REFRESH_TOKEN_TTL_DAYS,
     emailVerificationTtlHours: env.EMAIL_VERIFICATION_TTL_HOURS,
     passwordResetTtlMinutes: env.PASSWORD_RESET_TTL_MINUTES,
     loginMaxFailedAttempts: env.LOGIN_MAX_FAILED_ATTEMPTS,
     loginWindowMinutes: env.LOGIN_WINDOW_MINUTES,
+    bcryptRounds: env.BCRYPT_ROUNDS,
+    rateLimitMax: env.AUTH_RATE_LIMIT_MAX_REQUESTS,
+  },
+
+  appBaseUrl: env.APP_BASE_URL,
+
+  mail: {
+    transport: env.MAIL_TRANSPORT,
+    from: env.MAIL_FROM,
+    smtp: { host: env.SMTP_HOST, port: env.SMTP_PORT, user: env.SMTP_USER, pass: env.SMTP_PASS },
   },
 
   rateLimit: {

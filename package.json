@@ -15,7 +15,8 @@
     "migrate:make": "knex --knexfile knexfile.js migrate:make",
     "seed": "node src/db/seeds/index.js",
     "audit:ledger": "node scripts/audit-ledger.js",
-    "test": "jest --runInBand --forceExit"
+    "test": "jest --runInBand --forceExit",
+    "test:memory": "cross-env TEST_BACKEND=memory jest --runInBand --forceExit"
   },
   "jest": {
     "testEnvironment": "node",
@@ -28,13 +29,16 @@
     ]
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.3",
     "knex": "^3.1.0",
     "mongoose": "^8.5.0",
+    "nodemailer": "^10.3.1",
     "pg": "^8.12.0",
     "pino": "^9.3.2",
     "pino-http": "^10.2.0",
@@ -43,6 +47,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "pino-pretty": "^11.2.2",

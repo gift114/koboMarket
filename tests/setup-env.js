@@ -6,4 +6,5 @@ process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/kobo
 // Always the test database, even if a .env points DATABASE_URL somewhere else.
 process.env.DATABASE_URL = testDatabaseUrl;
 process.env.JWT_ACCESS_SECRET = 'test-access-secret-test-access-secret-1234';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-test-refresh-secret-1234';
+process.env.MAIL_TRANSPORT = 'memory';
+process.env.BCRYPT_ROUNDS = '4'; // minimum cost, keeps the suite fast
