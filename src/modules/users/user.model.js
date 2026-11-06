@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
+const config = require('../../config');
 
+const WALLET_STATUS = ['pending', 'ready'];
 const ROLES = ['buyer', 'vendor', 'admin'];
 const USER_STATUS = ['active', 'frozen'];
 
@@ -22,10 +24,26 @@ const userSchema = new mongoose.Schema(
     // Embedded in every access token. Bumping it instantly invalidates all outstanding access
     // tokens (password reset, refresh-token reuse).
     tokenVersion: { type: Number, default: 0 },
+
+    // Cross-database consistency (MongoDB user <-> PostgreSQL wallet). A user is born with
+    // walletStatus "pending", which is the durable record that a wallet still has to be
+    // created. It flips to "ready" only after the PostgreSQL account exists. A background
+    // job retries every pending user, so a failed wallet creation is never lost.
+    walletStatus: { type: String, enum: WALLET_STATUS, default: 'pending' },
+    walletAttempts: { type: Number, default: 0 },
+    // When the job may look at this user next. New users get a short grace period so the job
+    // does not race the signup request that is creating their wallet right now.
+    walletNextAttemptAt: {
+      type: Date,
+      default: () => new Date(Date.now() + config.walletProvisioning.graceSeconds * 1000),
+    },
   },
   { timestamps: true },
 );
 
+userSchema.index({ walletStatus: 1, walletNextAttemptAt: 1 });
+
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports.ROLES = ROLES;
 module.exports.USER_STATUS = USER_STATUS;
+module.exports.WALLET_STATUS = WALLET_STATUS;

@@ -29,6 +29,12 @@ const schema = z.object({
   ESCROW_AUTO_COMPLETE_HOURS: int(72),
   PAYOUT_MINIMUM_KOBO: int(100000),
 
+  // Creating the PostgreSQL wallet of each new user (see walletProvisioning.service.js).
+  WALLET_PROVISION_CRON: z.string().default('*/30 * * * * *'),
+  WALLET_PROVISION_GRACE_SECONDS: int(60),
+  WALLET_PROVISION_MAX_BACKOFF_SECONDS: int(900),
+  WALLET_PROVISION_BATCH_SIZE: int(50),
+
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
   AUTH_RATE_LIMIT_MAX_REQUESTS: int(20),
   APP_BASE_URL: z.string().default('http://localhost:3000'),
@@ -95,6 +101,13 @@ module.exports = {
   },
 
   appBaseUrl: env.APP_BASE_URL,
+
+  walletProvisioning: {
+    cron: env.WALLET_PROVISION_CRON,
+    graceSeconds: env.WALLET_PROVISION_GRACE_SECONDS,
+    maxBackoffSeconds: env.WALLET_PROVISION_MAX_BACKOFF_SECONDS,
+    batchSize: env.WALLET_PROVISION_BATCH_SIZE,
+  },
 
   mail: {
     transport: env.MAIL_TRANSPORT,

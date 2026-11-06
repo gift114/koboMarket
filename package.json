@@ -14,6 +14,7 @@
     "migrate:rollback": "knex --knexfile knexfile.js migrate:rollback",
     "migrate:make": "knex --knexfile knexfile.js migrate:make",
     "seed": "node src/db/seeds/index.js",
+    "create-admin": "node scripts/create-admin.js",
     "audit:ledger": "node scripts/audit-ledger.js",
     "test": "jest --runInBand --forceExit",
     "test:memory": "cross-env TEST_BACKEND=memory jest --runInBand --forceExit"
@@ -38,6 +39,7 @@
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.1.0",
     "mongoose": "^8.5.0",
+    "node-cron": "^4.6.0",
     "nodemailer": "^10.3.1",
     "pg": "^8.12.0",
     "pino": "^9.3.2",

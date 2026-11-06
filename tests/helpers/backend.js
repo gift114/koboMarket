@@ -16,6 +16,7 @@ if (MEMORY) {
   mock('../../src/modules/auth/refreshToken.repository', memory.refreshTokenRepository);
   mock('../../src/modules/auth/authToken.repository', memory.authTokenRepository);
   mock('../../src/modules/auth/loginAttempt.repository', memory.loginAttemptRepository);
+  mock('../../src/modules/vendors/vendor.repository', memory.vendorRepository);
 }
 
 async function start() {
@@ -29,6 +30,7 @@ async function start() {
   require('../../src/modules/auth/refreshToken.model');
   require('../../src/modules/auth/authToken.model');
   require('../../src/modules/auth/loginAttempt.model');
+  require('../../src/modules/vendors/vendor.model');
 
   await connectMongo();
   await mongoose.connection.dropDatabase(); // a clean slate every run (test database only)

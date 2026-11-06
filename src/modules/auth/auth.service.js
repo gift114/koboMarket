@@ -9,6 +9,7 @@ const refreshTokenRepository = require('./refreshToken.repository');
 const authTokenRepository = require('./authToken.repository');
 const loginAttemptRepository = require('./loginAttempt.repository');
 const tokenService = require('./token.service');
+const walletProvisioning = require('../wallet/walletProvisioning.service');
 
 const EMAIL_VERIFICATION = 'email_verification';
 const PASSWORD_RESET = 'password_reset';
@@ -67,6 +68,10 @@ async function register({ email, password, fullName, phone }) {
     }
     throw err;
   }
+
+  // Create the PostgreSQL wallet. Never throws: if it fails, the user stays "pending" and the
+  // background job retries (see walletProvisioning.service.js).
+  await walletProvisioning.tryProvision(user.id);
 
   // A mail failure must not undo the registration; the user can ask for a new email.
   try {

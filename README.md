@@ -4,7 +4,7 @@ A multi-vendor marketplace backend with wallets and escrow. Buyers pay into escr
 
 **Stack:** Node.js, Express, MongoDB (user side), PostgreSQL (money side).
 
-> Status: Day 3 of 14 complete (foundation, PostgreSQL ledger schema, authentication). This README grows with each module.
+> Status: Day 4 of 14 complete (foundation, PostgreSQL ledger schema, authentication, RBAC, vendors, wallet provisioning). This README grows with each module.
 
 ## Quick start
 
@@ -38,6 +38,7 @@ npm run dev
 | `npm run migrate` | Run PostgreSQL migrations (Knex) |
 | `npm run migrate:rollback` | Roll back the last migration batch |
 | `npm run seed` | Seed admin, vendors, products, buyers (Day 13) |
+| `npm run create-admin -- <email> <password>` | Create (or promote) a verified admin and its wallet. Needed to approve vendors until the seed exists. In Docker: `docker-compose exec api npm run create-admin -- admin@kobomarket.test 'Str0ngPassw0rd'` |
 | `npm run audit:ledger` | Verify the money invariant, prints PASS/FAIL (Day 5) |
 | `npm test` | Jest + Supertest against real MongoDB and PostgreSQL (`docker-compose up -d mongo postgres`). It rebuilds its own `kobomarket_test` databases each run |
 | `npm run test:memory` | Same suite, but the MongoDB repositories are replaced by in-memory fakes. For machines with no MongoDB; PostgreSQL is still required |
@@ -145,7 +146,52 @@ Users live in MongoDB. Endpoints: `register`, `verify-email`, `resend-verificati
 
 **A race worth knowing about.** If two requests replay the same refresh token at the same instant, the replay's "log out everywhere" sweep could run *before* the winner has stored its new token, leaving one live session. `bumpTokenVersion` therefore runs before the revoke sweep, and `refresh()` re-checks the token version after storing its new token and undoes itself if it changed. A deterministic test holds the winner's write open, fires the replay in that window, and asserts no live token remains. Removing the guard makes that test fail.
 
-Not yet built: role checks (RBAC middleware) arrive with the vendor module; the PostgreSQL wallet that must be created for every new user is part of the cross-database consistency work (Day 4).
+## Roles and RBAC
+
+A user has a list of roles (`buyer`, `vendor`, `admin`), so one person can be both buyer and vendor. Roles are enforced in exactly one place, the `authorize(...roles)` middleware (any listed role is enough):
+
+```js
+router.post('/products', authenticate, authorize('vendor'), controller.create);
+router.use(authenticate, authorize('admin'));          // a whole router, e.g. /admin
+```
+
+Controllers and services contain no `if (user.role === ...)` checks. `authenticate` loads the user on every request, so roles are never stale: a newly approved vendor has access immediately with their existing token, and a revoked role stops working immediately. A missing token is `401`; a valid token without the role is `403 INSUFFICIENT_ROLE`.
+
+## Vendors (Module B, part 1)
+
+`POST /vendors/apply` (any logged-in user) creates a `pending` application with store name, description and bank details. An admin then decides: `PATCH /admin/vendors/:id/approve` or `.../reject` (a reason is required). I added `reject`, `GET /admin/vendors` and `GET /vendors/me` to the endpoints in the brief, because pending applications otherwise cannot be found, rejected, or checked by the applicant.
+
+- Status moves `pending -> approved | rejected`, and `rejected -> pending` when the applicant fixes the application and re-applies. Each move is one atomic MongoDB update that only applies if the application is still in the expected state, so an approve and a reject racing each other cannot both win.
+- Approval flips the status and then adds the `vendor` role (idempotent `$addToSet`). If the role step fails, the status is rolled back to `pending`; approving an already-approved vendor re-applies the role, which repairs a half-finished approval.
+- Store names are unique case-insensitively (a lower-cased key with a unique index). One application per user.
+- Bank account numbers are stored for payouts but **never returned in full**: the API shows `******6789`. The public store page (`GET /vendors/:id`, approved vendors only, no login) shows just the name and description.
+
+## Cross-database consistency (part 1 of 2): user in MongoDB, wallet in PostgreSQL
+
+MongoDB and PostgreSQL cannot share a transaction, so "the user was saved but their wallet was not" has to be handled explicitly. **Chosen approach: an outbox-style record plus an idempotent retrying job** (not compensation that deletes the user).
+
+1. The user document is created with `walletStatus: "pending"`. That field is the durable record that a wallet still has to be created.
+2. Immediately, the signup request tries the fast path: create the PostgreSQL account, then mark the user `ready`.
+3. If anything fails, signup still succeeds and the user simply stays `pending`. A background job (`WALLET_PROVISION_CRON`, every 30 seconds) retries every pending user with exponential backoff (5s, 10s, 20s ... capped at 15 minutes).
+
+Why this and not compensation: deleting a freshly registered user because a different database blipped is worse for the user than waiting a few seconds for a wallet, and it can itself fail. Retrying forward always converges.
+
+Why it is safe to retry at any point:
+- The account insert is `INSERT ... ON CONFLICT DO NOTHING` on `UNIQUE (owner_type, owner_id, currency)`, so there can never be two wallets for one user, even with concurrent calls.
+- The job *claims* users with one atomic update that pushes their next-attempt time forward (a lease), so two job runs or two API instances never work on the same user, and a crashed worker's lease just expires.
+- New users get a short grace period so the job does not race the signup request that is creating the wallet.
+
+The failure cases are tested by injecting faults: PostgreSQL down at signup, wallet created but the `ready` flag lost, even the failure bookkeeping failing, ten concurrent provisioning calls, and concurrent job claims.
+
+A note on wording: when planning this I described it as writing "a create-wallet row in PostgreSQL in the same transaction". That cannot work for this direction, because the MongoDB write comes first and cannot join a PostgreSQL transaction. The pending flag on the MongoDB user is the outbox entry instead. The other direction (money escrowed in PostgreSQL, then the MongoDB stock decrement fails) is handled with compensation at checkout (Day 9).
+
+Not yet built: the wallet endpoints themselves (Day 5), which will also call the same idempotent provisioning if they ever meet a user whose wallet is still pending.
+
+## Known limitations (so far)
+
+- Vendor bank account numbers are stored in plain text in MongoDB (masked in every API response). Encrypting them at rest would be the next step.
+- Background jobs run inside the API process. That is fine for one instance; claims and leases already make it safe for several, but a separate worker process (or BullMQ) would be cleaner at scale.
+- A database superuser can disable the ledger triggers, and the demo `docker-compose` connects as one.
 
 ## Sections still to be written (as modules land)
 
