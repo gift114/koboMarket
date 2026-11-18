@@ -1,0 +1,38 @@
+:root {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #1d3129;
+  background: #fcfbf7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --green: #214f3b;
+  --green-dark: #183c30;
+  --green-soft: #e8f0e9;
+  --cream: #fcfbf7;
+  --sand: #f3efe5;
+  --gold: #efbd56;
+  --ink: #1d3129;
+  --muted: #748078;
+  --line: #e6e9e3;
+  --red: #bd4b40;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--cream);
+}
+
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+h1, h2, h3, p { margin-top: 0; }
+h1, h2, h3 { color: var(--ink); }
+h1, h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 600; letter-spacing: -.025em; }
+::selection { color: var(--green-dark); background: #f5dc9c; }
