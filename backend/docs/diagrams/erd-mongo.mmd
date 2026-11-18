@@ -1,0 +1,61 @@
+erDiagram
+  User ||--o| Vendor : "applies as"
+  Vendor ||--o{ Product : sells
+  User ||--o| Cart : owns
+  Product ||--o{ Review : "reviewed in"
+  User ||--o{ Review : writes
+  User ||--o{ Notification : receives
+  User ||--o{ RefreshToken : "sessions"
+  Product ||--|{ Variant : "embeds"
+  Cart ||--|{ CartItem : "embeds"
+  User {
+    string email UK
+    string fullName
+    array roles "buyer vendor admin"
+    string status "active or frozen"
+    string walletStatus
+  }
+  Vendor {
+    ObjectId userId UK
+    string storeName UK
+    object bankDetails
+    string status "pending approved rejected"
+  }
+  Product {
+    ObjectId vendorId
+    string slug UK
+    int priceKobo "lowest variant"
+    int stock
+    int ratingCount
+    date deletedAt "soft delete"
+  }
+  Variant {
+    string sku
+    int priceKobo
+    int stock
+  }
+  Cart {
+    ObjectId userId UK
+    int rev "optimistic concurrency"
+  }
+  CartItem {
+    ObjectId productId
+    int quantity
+    int priceKobo "snapshot for warnings"
+  }
+  Review {
+    ObjectId productId
+    ObjectId buyerId "unique pair"
+    int rating
+  }
+  Notification {
+    ObjectId userId
+    string type
+    string dedupeKey "unique with userId"
+    date readAt
+  }
+  RefreshToken {
+    ObjectId userId
+    string tokenHash
+    date expiresAt
+  }

@@ -1,0 +1,9 @@
+flowchart LR
+  EXT["PLATFORM_EXTERNAL<br/>(the bank)"] -->|"1 WALLET_FUNDING"| BW["Buyer wallet"]
+  BW -->|"2 ORDER_PAYMENT"| ESC["PLATFORM_ESCROW"]
+  ESC -->|"3a ESCROW_RELEASE: net"| VW["Vendor wallet"]
+  ESC -->|"3b ESCROW_RELEASE: commission"| REV["PLATFORM_REVENUE"]
+  ESC -->|"cancel / dispute refund"| BW
+  VW -->|"4 PAYOUT_REQUEST"| CLR["PLATFORM_PAYOUT_CLEARING"]
+  CLR -->|"5a PAYOUT_SETTLEMENT (success)"| EXT
+  CLR -->|"5b PAYOUT_REVERSAL (failed)"| VW

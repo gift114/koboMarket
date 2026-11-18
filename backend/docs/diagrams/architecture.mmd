@@ -1,0 +1,16 @@
+flowchart TB
+  client["Client / Postman / Swagger UI"] -->|HTTPS + JWT| api
+  subgraph api["Express API (one process)"]
+    direction TB
+    mw["Middleware: requestId, Helmet, CORS, rate limit, Zod validate, authenticate, authorize, idempotent"]
+    routes["Routes"] --> controllers["Controllers"] --> services["Services (all business rules)"] --> repos["Repositories"]
+    mw --> routes
+    bus["In-process event bus"]
+    jobs["node-cron jobs: auto-complete escrow, payouts, stuck-orders, wallet provisioning"]
+  end
+  services -->|publish after commit| bus --> listeners["Notification listeners"]
+  jobs --> services
+  repos --> mongo[("MongoDB<br/>users, vendors, products,<br/>carts, reviews, notifications,<br/>auth tokens")]
+  repos --> pg[("PostgreSQL<br/>accounts, transactions, ledger_entries,<br/>orders, sub_orders, order_items,<br/>payments, payouts, disputes, settings,<br/>idempotency_keys, webhook_events")]
+  services <-->|charge / verify / transfer| paystack["Paystack (or mock provider)"]
+  paystack -->|signed webhook| mw

@@ -1,0 +1,2658 @@
+{
+  "info": {
+    "name": "KoboMarket API",
+    "description": "Generated from the OpenAPI spec (npm run postman). Start with Auth -> register, verify, login (the login request stores {{token}}). Money is integer kobo. Every state-changing money request has an Idempotency-Key header filled with {{$guid}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "email",
+      "value": "demo.buyer@example.com"
+    },
+    {
+      "key": "password",
+      "value": "ChangeMe123!"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "vendorId",
+      "value": ""
+    },
+    {
+      "key": "subOrderId",
+      "value": ""
+    },
+    {
+      "key": "reference",
+      "value": ""
+    },
+    {
+      "key": "payoutId",
+      "value": ""
+    },
+    {
+      "key": "slug",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health - Liveness check (does not touch the databases)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ],
+              "query": []
+            },
+            "description": "Liveness check (does not touch the databases)"
+          }
+        },
+        {
+          "name": "GET /health/ready - Readiness check (MongoDB and PostgreSQL must both respond)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ],
+              "query": []
+            },
+            "description": "Readiness check (MongoDB and PostgreSQL must both respond)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register - Create an account (buyer). A verification email is sent.",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"fullName\": \"Demo User\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Create an account (buyer). A verification email is sent."
+          }
+        },
+        {
+          "name": "POST /auth/verify-email - Verify an email address with the token that was emailed (single use, time-limited)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ],
+              "query": []
+            },
+            "description": "Verify an email address with the token that was emailed (single use, time-limited)"
+          }
+        },
+        {
+          "name": "POST /auth/resend-verification - Send a new verification email (same response whether or not the account exists)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "resend-verification"
+              ],
+              "query": []
+            },
+            "description": "Send a new verification email (same response whether or not the account exists)"
+          }
+        },
+        {
+          "name": "POST /auth/login - Log in. Returns a 15-minute access token and a 7-day refresh token.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.success && j.data && j.data.accessToken) {",
+                  "  pm.collectionVariables.set('token', j.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', j.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "Max 5 failed attempts per 15 minutes per email + IP, then 429 with Retry-After."
+          }
+        },
+        {
+          "name": "POST /auth/refresh - Exchange a refresh token for a new access + refresh token (rotation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.success && j.data && j.data.accessToken) {",
+                  "  pm.collectionVariables.set('token', j.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', j.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ],
+              "query": []
+            },
+            "description": "Each refresh token works once. Re-using an old one logs the user out of ALL sessions."
+          }
+        },
+        {
+          "name": "POST /auth/logout - Invalidate a refresh token (this session only)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ],
+              "query": []
+            },
+            "description": "Invalidate a refresh token (this session only)"
+          }
+        },
+        {
+          "name": "POST /auth/forgot-password - Email a password reset token (same response whether or not the account exists)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ],
+              "query": []
+            },
+            "description": "Email a password reset token (same response whether or not the account exists)"
+          }
+        },
+        {
+          "name": "POST /auth/reset-password - Set a new password using a reset token. Logs the user out of all sessions.",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\",\n  \"newPassword\": \"xxxxxxxx\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ],
+              "query": []
+            },
+            "description": "Set a new password using a reset token. Logs the user out of all sessions."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /users/me - The logged-in user's profile",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "The logged-in user's profile"
+          }
+        },
+        {
+          "name": "PATCH /users/me - Update name or phone (email, roles and status cannot be changed here)",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"string\",\n  \"phone\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "Update name or phone (email, roles and status cannot be changed here)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "POST /vendors/apply - Apply to become a vendor (status starts as pending; an admin decides)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "try { const v = j.data.vendor.id; if (v) pm.collectionVariables.set('vendorId', v); } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeName\": \"Ade Fashion House\",\n  \"description\": \"string\",\n  \"bankDetails\": {\n    \"bankName\": \"GTBank\",\n    \"accountNumber\": \"0123456789\",\n    \"accountName\": \"string\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vendors/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vendors",
+                "apply"
+              ],
+              "query": []
+            },
+            "description": "A rejected applicant may apply again with corrected details."
+          }
+        },
+        {
+          "name": "GET /vendors/me - My own vendor application / store, with its status",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vendors/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vendors",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "My own vendor application / store, with its status"
+          }
+        },
+        {
+          "name": "GET /vendors/{id} - Public store page (approved vendors only)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vendors/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "vendors",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Public store page (approved vendors only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GET /products - Search and list products (public)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Full-text search"
+                },
+                {
+                  "key": "category",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "tag",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "vendor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Vendor id"
+                },
+                {
+                  "key": "minPrice",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "kobo"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "kobo"
+                },
+                {
+                  "key": "minRating",
+                  "value": "0",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "sort",
+                  "value": "newest",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Full-text search on name and description, filters, sorting and **cursor** pagination.\nPass the returned `nextCursor` back as `cursor` (with the same `sort`) to get the next page.\nMoney is integer kobo.\n"
+          }
+        },
+        {
+          "name": "POST /products - Create a product (approved vendors only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "try { const v = j.data.product.id; if (v) pm.collectionVariables.set('productId', v); } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ankara Tote Bag\",\n  \"category\": \"bags\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": []
+            },
+            "description": "Without variants send `priceKobo` (and `stock`). With variants, each variant has its own\n`priceKobo` and `stock`; the product price becomes the lowest variant price and the\nstock the total. The slug is generated from the name.\n"
+          }
+        },
+        {
+          "name": "GET /products/{slug} - Product page by slug (public; inactive or deleted products are 404)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{slug}}"
+              ],
+              "query": []
+            },
+            "description": "Product page by slug (public; inactive or deleted products are 404)"
+          }
+        },
+        {
+          "name": "PATCH /products/{id} - Update my product (vendor who owns it)",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Send only the fields to change. `variants` replaces the whole list; keep a variant by sending its `id`."
+          }
+        },
+        {
+          "name": "DELETE /products/{id} - Soft-delete my product (vendor who owns it)",
+          "event": [],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "Soft-delete my product (vendor who owns it)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "GET /cart - My cart, priced at CURRENT prices with stock warnings",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart"
+              ],
+              "query": []
+            },
+            "description": "Each item shows the price when it was added (`addedPriceKobo`), the current price,\n`priceChanged`, and `issue` (PRODUCT_UNAVAILABLE, VARIANT_UNAVAILABLE, OUT_OF_STOCK,\nINSUFFICIENT_STOCK) when it cannot be bought as it is. `vendors` groups the purchasable\nitems by vendor; `totalKobo` counts purchasable items only.\n"
+          }
+        },
+        {
+          "name": "POST /cart/items - Add a product (or variant) to the cart",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ],
+              "query": []
+            },
+            "description": "Adding something already in the cart increases its quantity. The total is checked against stock."
+          }
+        },
+        {
+          "name": "PATCH /cart/items/{itemId} - Set the quantity of a cart item",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items/{{itemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items",
+                "{{itemId}}"
+              ],
+              "query": []
+            },
+            "description": "Set the quantity of a cart item"
+          }
+        },
+        {
+          "name": "DELETE /cart/items/{itemId} - Remove an item from the cart",
+          "event": [],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items/{{itemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items",
+                "{{itemId}}"
+              ],
+              "query": []
+            },
+            "description": "Remove an item from the cart"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "GET /wallet - My wallet balance (integer kobo)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet"
+              ],
+              "query": []
+            },
+            "description": "My wallet balance (integer kobo)"
+          }
+        },
+        {
+          "name": "GET /wallet/transactions - My ledger history, newest first, with the balance after each entry",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallet/transactions?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "nextCursor from the previous page"
+                },
+                {
+                  "key": "type",
+                  "value": "WALLET_FUNDING",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "direction",
+                  "value": "debit",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "My ledger history, newest first, with the balance after each entry"
+          }
+        },
+        {
+          "name": "POST /wallet/fund - Start a wallet top-up (returns a checkout URL; no money moves yet)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "try { const v = j.data.payment.reference; if (v) pm.collectionVariables.set('reference', v); } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "New value per logical request; reuse it to see the replay."
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountKobo\": 500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallet/fund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "fund"
+              ],
+              "query": []
+            },
+            "description": "Requires an `Idempotency-Key` header. The same key with the same body returns the original\nresponse; the same key with a different body is 409. The wallet is credited only after the\nprovider confirms the payment (webhook) and we re-verify it.\n"
+          }
+        },
+        {
+          "name": "GET /wallet/fund/{reference} - Status of one of my top-ups (also the Paystack callback URL)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallet/fund/{{reference}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "fund",
+                "{{reference}}"
+              ],
+              "query": []
+            },
+            "description": "If the payment is still PENDING this asks the provider and credits the wallet if it was paid (a fallback for a missed webhook). Crediting is idempotent."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "POST /orders/checkout - Check out my cart (pays from my wallet into escrow)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "try { const v = j.data.order.subOrders[0].id; if (v) pm.collectionVariables.set('subOrderId', v); } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "New value per logical request; reuse it to see the replay."
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedTotalKobo\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "checkout"
+              ],
+              "query": []
+            },
+            "description": "Requires an `Idempotency-Key` header: the same key never creates two orders (replay returns\nthe original response). The cart is re-validated against current stock and prices. In one\nPostgreSQL transaction the order is created (one parent order, one sub-order per vendor)\nand the buyer's wallet is debited into PLATFORM_ESCROW. Stock is then decremented in\nMongoDB; if that fails the payment is reversed and the order cancelled.\n"
+          }
+        },
+        {
+          "name": "GET /orders - My orders, newest first (cursor pagination)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "My orders, newest first (cursor pagination)"
+          }
+        },
+        {
+          "name": "GET /orders/{id} - One order with its sub-orders and items (the buyer, or an admin)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "One order with its sub-orders and items (the buyer, or an admin)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fulfilment",
+      "item": [
+        {
+          "name": "GET /orders/sales - My sales as a vendor (sub-orders), newest first",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/sales?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PAID",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "My sales as a vendor (sub-orders), newest first"
+          }
+        },
+        {
+          "name": "POST /orders/sub-orders/{id}/ship - Vendor marks a PAID sub-order as SHIPPED",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/sub-orders/{{id}}/ship",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "sub-orders",
+                "{{id}}",
+                "ship"
+              ],
+              "query": []
+            },
+            "description": "Only the vendor who owns the sub-order (others get 404). Starts the buyer's 72-hour confirmation window."
+          }
+        },
+        {
+          "name": "POST /orders/sub-orders/{id}/confirm-delivery - Buyer confirms delivery; the sub-order completes and escrow is released",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/sub-orders/{{id}}/confirm-delivery",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "sub-orders",
+                "{{id}}",
+                "confirm-delivery"
+              ],
+              "query": []
+            },
+            "description": "SHIPPED -> DELIVERED -> COMPLETED in one transaction. One ledger transaction moves the\nescrow: subtotal minus commission to the vendor's wallet, the commission (the rate\nrecorded on the sub-order at checkout, default 5%) to PLATFORM_REVENUE.\n"
+          }
+        },
+        {
+          "name": "POST /orders/sub-orders/{id}/cancel - Buyer cancels a sub-order that has not shipped yet (escrow refunded, stock restored)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/sub-orders/{{id}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "sub-orders",
+                "{{id}}",
+                "cancel"
+              ],
+              "query": []
+            },
+            "description": "Buyer cancels a sub-order that has not shipped yet (escrow refunded, stock restored)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "GET /admin/reports/revenue-by-day - Platform revenue (commission) per day, last N days (UTC), zero-filled",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/revenue-by-day?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "revenue-by-day"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Platform revenue (commission) per day, last N days (UTC), zero-filled"
+          }
+        },
+        {
+          "name": "GET /admin/reports/top-vendors - Top 10 vendors by earnings in a month (default this month, UTC)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/top-vendors?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "top-vendors"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2026-11",
+                  "disabled": true,
+                  "description": "YYYY-MM"
+                }
+              ]
+            },
+            "description": "Top 10 vendors by earnings in a month (default this month, UTC)"
+          }
+        },
+        {
+          "name": "GET /admin/reports/escrow - Money currently held in escrow, by sub-order status, and whether it matches the escrow account",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/escrow",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "escrow"
+              ],
+              "query": []
+            },
+            "description": "Money currently held in escrow, by sub-order status, and whether it matches the escrow account"
+          }
+        },
+        {
+          "name": "GET /admin/reports/reconciliation - Reconciliation report: every ledger, order, payout and dispute inconsistency (empty when healthy)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/reconciliation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "reconciliation"
+              ],
+              "query": []
+            },
+            "description": "Reconciliation report: every ledger, order, payout and dispute inconsistency (empty when healthy)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Disputes",
+      "item": [
+        {
+          "name": "POST /orders/sub-orders/{id}/dispute - Buyer opens a dispute on a shipped sub-order (freezes its escrow)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"xxxxxxxxxx\",\n  \"evidence\": [\n    {\n      \"type\": \"text\",\n      \"value\": \"string\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/sub-orders/{{id}}/dispute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "sub-orders",
+                "{{id}}",
+                "dispute"
+              ],
+              "query": []
+            },
+            "description": "Allowed while the sub-order is SHIPPED (or DELIVERED). It becomes DISPUTED: the vendor is not\npaid, the buyer cannot cancel or confirm, and the auto-complete job skips it until an admin\nresolves the dispute. Evidence is a list of text notes and image URLs (max 10).\n"
+          }
+        },
+        {
+          "name": "GET /disputes - Disputes I am part of (as buyer or vendor); an admin sees all",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/disputes?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disputes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "OPEN",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Disputes I am part of (as buyer or vendor); an admin sees all"
+          }
+        },
+        {
+          "name": "GET /disputes/{id} - One dispute (its buyer, its vendor, or an admin)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/disputes/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disputes",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "One dispute (its buyer, its vendor, or an admin)"
+          }
+        },
+        {
+          "name": "POST /disputes/{id}/resolve - Admin resolves a dispute (full refund, partial refund or reject)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"FULL_REFUND\",\n  \"refundKobo\": 1,\n  \"note\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/disputes/{{id}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "disputes",
+                "{{id}}",
+                "resolve"
+              ],
+              "query": []
+            },
+            "description": "Settles the frozen escrow in one ledger transaction and records the admin and the note.\nFULL_REFUND returns everything to the buyer (sub-order REFUNDED). PARTIAL_REFUND returns\n`refundKobo` to the buyer and pays the rest to the vendor, with commission on the vendor's\npart only. REJECT releases everything to the vendor as a normal completion.\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payouts",
+      "item": [
+        {
+          "name": "POST /payouts - Vendor requests a payout to their bank account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "try { const v = j.data.payout.id; if (v) pm.collectionVariables.set('payoutId', v); } catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "New value per logical request; reuse it to see the replay."
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountKobo\": 100000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payouts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payouts"
+              ],
+              "query": []
+            },
+            "description": "Requires an `Idempotency-Key` header. The amount (integer kobo, at least the minimum, N1,000\nby default) leaves the wallet immediately for PLATFORM_PAYOUT_CLEARING; a background job\nthen sends it. A vendor may have only one PENDING payout at a time. If the transfer fails\nthe money returns to the wallet.\n"
+          }
+        },
+        {
+          "name": "GET /payouts - My payouts, newest first",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payouts?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payouts"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "My payouts, newest first"
+          }
+        },
+        {
+          "name": "GET /payouts/{id} - One payout (its owner, or an admin). The bank account number is masked.",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payouts/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payouts",
+                "{{id}}"
+              ],
+              "query": []
+            },
+            "description": "One payout (its owner, or an admin). The bank account number is masked."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /notifications - My notifications, newest first (paginated)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread",
+                  "value": "true",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Created asynchronously after an order is placed or shipped, funds are released, a dispute is opened or resolved, and a payout succeeds or fails."
+          }
+        },
+        {
+          "name": "GET /notifications/unread-count - How many unread notifications I have",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ],
+              "query": []
+            },
+            "description": "How many unread notifications I have"
+          }
+        },
+        {
+          "name": "PATCH /notifications/read-all - Mark all my notifications as read",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ],
+              "query": []
+            },
+            "description": "Mark all my notifications as read"
+          }
+        },
+        {
+          "name": "PATCH /notifications/{id}/read - Mark one of my notifications as read (idempotent)",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{id}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{id}}",
+                "read"
+              ],
+              "query": []
+            },
+            "description": "Mark one of my notifications as read (idempotent)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "POST /webhooks/paystack - Paystack webhook (signature required)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/paystack",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "paystack"
+              ],
+              "query": []
+            },
+            "description": "Verifies `x-paystack-signature` = HMAC SHA512 of the raw body with the secret key; anything\nunsigned or wrongly signed is 401. Duplicate deliveries are acknowledged and ignored. On\n`charge.success` the transaction is re-verified with Paystack before the wallet is credited.\n"
+          }
+        },
+        {
+          "name": "POST /dev/mock-payments/{reference}/pay - DEV ONLY - simulate the customer paying (or failing) a mock top-up",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"success\",\n  \"duplicates\": 2,\n  \"amountKobo\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dev/mock-payments/{{reference}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dev",
+                "mock-payments",
+                "{{reference}}",
+                "pay"
+              ],
+              "query": []
+            },
+            "description": "Exists only when PAYMENT_PROVIDER=mock and NODE_ENV is not production. Marks the mock payment\npaid or failed, then delivers the signed webhook (plus `duplicates` extra copies) to the real\nwebhook endpoint, so the whole funding flow can be demoed without Paystack.\n"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/vendors - List vendor applications (newest first, cursor pagination)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/vendors?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "nextCursor from the previous page"
+                }
+              ]
+            },
+            "description": "List vendor applications (newest first, cursor pagination)"
+          }
+        },
+        {
+          "name": "PATCH /admin/vendors/{id}/approve - Approve a vendor application and grant the vendor role",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/vendors/{{id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "vendors",
+                "{{id}}",
+                "approve"
+              ],
+              "query": []
+            },
+            "description": "Idempotent. Approving an already-approved vendor re-applies the role."
+          }
+        },
+        {
+          "name": "PATCH /admin/vendors/{id}/reject - Reject a pending vendor application (a reason is required)",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/vendors/{{id}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "vendors",
+                "{{id}}",
+                "reject"
+              ],
+              "query": []
+            },
+            "description": "Reject a pending vendor application (a reason is required)"
+          }
+        },
+        {
+          "name": "GET /admin/users - List and search users (newest first, cursor pagination)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Text in the email or name (case-insensitive)"
+                },
+                {
+                  "key": "role",
+                  "value": "buyer",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List and search users (newest first, cursor pagination)"
+          }
+        },
+        {
+          "name": "PATCH /admin/users/{id}/freeze - Freeze a user (cannot place orders or request payouts; can still log in)",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{id}}/freeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{id}}",
+                "freeze"
+              ],
+              "query": []
+            },
+            "description": "Freeze a user (cannot place orders or request payouts; can still log in)"
+          }
+        },
+        {
+          "name": "PATCH /admin/users/{id}/unfreeze - Unfreeze a user",
+          "event": [],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{id}}/unfreeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{id}}",
+                "unfreeze"
+              ],
+              "query": []
+            },
+            "description": "Unfreeze a user"
+          }
+        },
+        {
+          "name": "GET /admin/wallets/{userId} - Any user's wallet balance and status",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/wallets/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "wallets",
+                "{{userId}}"
+              ],
+              "query": []
+            },
+            "description": "Any user's wallet balance and status"
+          }
+        },
+        {
+          "name": "GET /admin/wallets/{userId}/ledger - Any user's ledger history with the running balance after each entry",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/wallets/{{userId}}/ledger?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "wallets",
+                "{{userId}}",
+                "ledger"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "direction",
+                  "value": "debit",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Any user's ledger history with the running balance after each entry"
+          }
+        },
+        {
+          "name": "GET /admin/settings/commission - The commission rate that applies to new orders",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/settings/commission",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "settings",
+                "commission"
+              ],
+              "query": []
+            },
+            "description": "The commission rate that applies to new orders"
+          }
+        },
+        {
+          "name": "PUT /admin/settings/commission - Set the commission rate for NEW orders (basis points, 0 to 5000; 500 = 5%)",
+          "event": [],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rateBps\": 750\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/settings/commission",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "settings",
+                "commission"
+              ],
+              "query": []
+            },
+            "description": "Orders already placed keep the rate they were placed with. Every change is recorded in an append-only history."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "POST /products/{id}/reviews - Review a product (only buyers with a completed order for it; one review each)",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"title\": \"string\",\n  \"comment\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{id}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{id}}",
+                "reviews"
+              ],
+              "query": []
+            },
+            "description": "Review a product (only buyers with a completed order for it; one review each)"
+          }
+        },
+        {
+          "name": "GET /products/{id}/reviews - Reviews of a product, newest first (public)",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{id}}/reviews?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{id}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "string",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Reviews of a product, newest first (public)"
+          }
+        }
+      ]
+    }
+  ]
+}

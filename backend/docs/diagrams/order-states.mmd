@@ -1,0 +1,16 @@
+stateDiagram-v2
+  [*] --> PENDING_PAYMENT
+  PENDING_PAYMENT --> PAID
+  PENDING_PAYMENT --> CANCELLED
+  PAID --> SHIPPED
+  PAID --> CANCELLED: buyer cancels, escrow refunded
+  SHIPPED --> DELIVERED
+  SHIPPED --> COMPLETED: auto-complete after timeout
+  SHIPPED --> DISPUTED
+  DELIVERED --> COMPLETED: escrow released
+  DELIVERED --> DISPUTED
+  DISPUTED --> COMPLETED: reject or partial refund
+  DISPUTED --> REFUNDED: full refund
+  COMPLETED --> [*]
+  REFUNDED --> [*]
+  CANCELLED --> [*]

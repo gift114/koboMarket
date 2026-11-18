@@ -1,0 +1,107 @@
+erDiagram
+  accounts ||--o{ ledger_entries : "has entries"
+  transactions ||--|{ ledger_entries : "balanced set of"
+  transactions ||--o| transactions : "reverses"
+  orders ||--|{ sub_orders : "one per vendor"
+  sub_orders ||--|{ order_items : contains
+  sub_orders ||--o| disputes : "at most one"
+  orders }o--|| transactions : "payment_transaction_id"
+  payments }o--o| transactions : "ledger_transaction_id"
+  payouts }o--o| transactions : "request / settlement / reversal"
+  disputes }o--o| transactions : "resolution_transaction_id"
+  accounts {
+    uuid id PK
+    text owner_type "USER or SYSTEM"
+    text owner_id "mongo user id or system name"
+    bigint balance_kobo "cached, trigger-maintained"
+    text status
+  }
+  transactions {
+    uuid id PK
+    text type
+    text status
+    text idempotency_key UK
+    uuid reverses_transaction_id FK
+    jsonb metadata
+  }
+  ledger_entries {
+    uuid id PK
+    uuid transaction_id FK
+    uuid account_id FK
+    text direction "DEBIT or CREDIT"
+    bigint amount_kobo
+  }
+  orders {
+    uuid id PK
+    text buyer_id "mongo user id"
+    text idempotency_key "UK with buyer_id"
+    text status
+    bigint total_kobo
+    uuid payment_transaction_id FK
+    text stock_status
+  }
+  sub_orders {
+    uuid id PK
+    uuid order_id FK
+    text vendor_user_id
+    text status
+    bigint subtotal_kobo
+    int commission_rate_bps "snapshot at checkout"
+    bigint escrow_held_kobo
+  }
+  order_items {
+    uuid id PK
+    uuid sub_order_id FK
+    text product_id "mongo id"
+    int quantity
+    bigint unit_price_kobo "snapshot"
+  }
+  payments {
+    uuid id PK
+    text reference UK
+    text provider
+    bigint amount_kobo
+    text status
+    uuid ledger_transaction_id FK "unique"
+  }
+  payouts {
+    uuid id PK
+    text user_id
+    bigint amount_kobo
+    text status "PENDING SUCCESS FAILED"
+    uuid request_transaction_id FK
+    uuid settlement_transaction_id FK
+    uuid reversal_transaction_id FK
+  }
+  disputes {
+    uuid id PK
+    uuid sub_order_id FK "unique"
+    text status
+    text resolution
+    bigint refund_kobo
+    text resolved_by "admin id"
+    uuid resolution_transaction_id FK
+  }
+  platform_settings {
+    text key PK
+    jsonb value
+  }
+  platform_setting_changes {
+    uuid id PK
+    text key
+    jsonb old_value
+    jsonb new_value
+    text changed_by
+  }
+  webhook_events {
+    uuid id PK
+    text provider
+    text event_key "unique per provider"
+  }
+  idempotency_keys {
+    uuid id PK
+    text user_id
+    text key
+    text request_hash
+    int response_status
+  }
